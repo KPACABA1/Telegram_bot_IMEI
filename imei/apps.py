@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.core.signals import Signal
 
 
 class ImeiConfig(AppConfig):
