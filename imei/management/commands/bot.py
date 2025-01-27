@@ -1,53 +1,45 @@
-# botapp/management/commands/bot.py
-
 import os
-from os.path import exists
 
 import django
 from telegram import Update
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
-from asgiref.sync import sync_to_async  # Импортируем sync_to_async
+from telegram.ext import (Application, CommandHandler, MessageHandler, ContextTypes, filters)
+from asgiref.sync import sync_to_async
+from imei.models import TokenTG
+from dotenv import load_dotenv
+from django.core.management.base import BaseCommand
+
+load_dotenv()
 
 # Настройка Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')  # Укажите путь к вашим настройкам
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from imei.models import TokenTG  # Импорт моделей Django
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
-BOT_TOKEN = '7798011301:AAEcr2h266eKErzcwfN-9E8yWKx1VFf48Jc'
-
-# Обработчик команды /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработчик команды /start"""
     await update.message.reply_text("Привет! Я ваш бот. Напишите что-нибудь!")
 
-# Обработчик текстовых сообщений
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработчик текстовых сообщений"""
     user_message = update.message.text
 
     # Проверяем, существует ли объект с pk=1
-    exists = await sync_to_async(TokenTG.objects.filter(name='1').exists)()
+    exists = await sync_to_async(TokenTG.objects.filter(pk=1).exists)()
 
     if exists:
-        await update.message.reply_text("Объект с pk=1 существует!")
+        print('1')
     else:
-        await update.message.reply_text("Объект с pk=1 не найден.")
+        print('2')
 
-    # # Отправляем ответ пользователю
-    # await update.message.reply_text(f"Вы написали: {user_message}")
+    # Отправляем ответ пользователю
+    await update.message.reply_text(f"вы написал - {user_message}")
 
-from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
-    help = 'Запускает бота Telegram с использованием Long Polling'
-
+    """Запускает бота Telegram с использованием Long Polling"""
     def handle(self, *args, **options):
-        # Создаём объект Application (новая замена Updater)
+        # Создаём объект Application
         application = Application.builder().token(BOT_TOKEN).build()
 
         # Регистрация обработчиков
